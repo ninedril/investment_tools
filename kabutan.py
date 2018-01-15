@@ -1,7 +1,12 @@
 #####
 # arg1: specify company
 
-from function import *
+##### Loading other libraries
+import sys, os
+sys.path.append(os.pardir)
+from selenium_tools.function import *
+#####
+
 import csv
 
 # WevDriver => Boolean
@@ -17,7 +22,7 @@ def search_by_company(wd, company_name):
 # WebDriver => [WebElement, ...]
 def get_result_companies_link(wd):
     try:
-        result_companies = wd.find_elements_by_css_selector('div#kensaku_kekka ul li')
+        result_companies = wd.find_elements_by_css_selector('div#kensaku_kekka ul li a')
         return result_companies
     except:
         return []
@@ -35,8 +40,8 @@ def get_company_stock_price_link(wd):
 def get_company_stock_price_link_by_time(wd, term_flag):
     if term_flag == 'w':
         term = '週間株価'
-    elif term_flag == 'm'
-        term = '月間株価':
+    elif term_flag == 'm':
+        term = '月間株価'
     else:
         print('Invalid term')
         return None
@@ -55,44 +60,56 @@ def make_csv_from(array2d, path):
         w = csv.writer(f, lineterminator='\n')
         w.writerows(array2d)
 
-# WebDriver => Dict
-def get_price_table(wd):
-    result = {}
-    #find table and tr
-    table = wd.find_elements_by_css_selector('table.srock_kabuka2')[0]
-    header_row = table.find_elements_by_tag_name('tr')[0]
-
-    #register th
+# WebElement => Array
+def get_array_from_table(table_element):
+    header_row = table_element.find_elements_by_tag_name('tr')[0]
     labels = list(map(lambda e: e.text, header_row.find_elements_by_tag_name('th')))
-    result = {k: [] for k in labels}
 
+    result = [labels]
+    data_rows = table_element.find_elements_by_tag_name('tr')[1:]
+    for row in data_rows:
+        datas = list(map(lambda e: e.text, row.find_elements_by_tag_name('td')))
+        result.append(datas)
 
-    #loop
-    while True:
-        data_rows = table.find_elements_by_tag_name('tr')[1:]
-        for row in data_rows:
-            datas = list(map(lambda e: e.text, row.find_elements_by_tag_name('td')))
-            for k in result:
-                result[k].append()
-        # click next
-    #each 
-    return {}
-
+    return result
 
 if __name__ == '__main__':
-    #set variable
     target_url = 'https://kabutan.jp/'
     company = sys.argv[1]
     
-    dv = launchChrome()
+    dv = launchChrome(is_headless=True)
+    #dv = launchChrome(is_headless=False)
     dv.get(target_url)
     search_by_company(dv, company)
     
-    get_result_companies_link(dv)[0].click()
+    #import pdb; pdb.set_trace()
+
+    try:
+        get_result_companies_link(dv)[0].click()
+    except:
+        pass
 
     get_company_stock_price_link(dv).click()
 
     get_company_stock_price_link_by_time(dv, 'w').click()
 
+    all_datas = []
+    is_first_table = True
+    while True:
+        table = dv.find_elements_by_css_selector('table.stock_kabuka2')[0]
+        new_datas = get_array_from_table(table)
+        if not(is_first_table):
+            new_datas = new_datas[1:]
+        else:
+            is_first_table = False
+        all_datas.extend(new_datas)
+        
+        try:
+            next_table_link = dv.find_element_by_xpath("//a[text()='次へ＞']")
+        except:
+            break
+        next_table_link.click()
 
+    make_csv_from(all_datas, company + '.csv')
+    exit_driver(dv)
     
