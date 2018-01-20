@@ -84,34 +84,35 @@ if __name__ == '__main__':
     ### 上位企業のcodeを手に入れてリスト「codes」に格納
 
     ### codesの各企業のURLにアクセス、月次テーブル、日次テーブルをnd配列で取得
-    monthly_table = [[]]
+    monthly_table = np.array([[]])
     daily_table = [[]]
     
     #####【月次】monthly_table 
-    ###　１．m_return_index = {'2017-01': [(時価総額,過去収益率,月間加重収益), ...], '2017-02': [(...)], ...}
-    m_return_index = {}
-    ###　２．各行から、「月情報」「時価総額」「過去収益率」「月間加重収益率」を計算
-    ###
+    ###　１．m_1st_indexes = {'2017-01': [(時価総額,過去収益率,月間加重収益), ...], '2017-02': [(...)], ...}
+    m_1st_indexes = defaultdict(dict())
+
     mn_i = get_MN_index(monthly_table)
     sv_i = get_SV_index(monthly_table)
     cp_i = get_CP_index(monthly_table)
     op_i = get_OP_index(monthly_table)
 
+    ###　２．monthly_tableから「月間収益率（MR）」を計算し、テーブルに加える
+    mr_col = monthly_table[1:, cp_i]/monthly_table[1:, op_i]
+    mr_col.insert(0, '月間収益率')
+    mr_col = np.array([[e] for e in mr_col])
+    monthly_table = np.hstack(monthly_table, mr_col)
+
+    ###　３．各行から、「月情報」「時価総額」「過去収益率」「月間加重収益率」を計算
     monthly_rows = monthly_table[1:]
-    for row in monthly_rows:
+    for i, row in enumerate(monthly_rows):
         mn = make_dateId(row[mn_i])
-        mc = row[sv_i]*
-        pr = calc_PR(data)
-        mr = calc_MR(row)
-        mwr = calc_MWR(data)
+        mc = row[sv_i]*row[cp_i]
+        pr = calc_PR(row)
+        mwr = calc_MWR(row)
+
+        m_1st_indexes[mn].append((mc, pr, mwr))
 
     ###　３．
-
-def make_MN(m_str):
-    pass
-
-def calc_MC(sv, cp):
-    return sv*cp
 
 def calc_PR()
 
