@@ -101,7 +101,7 @@ if __name__ == '__main__':
     for row in monthly_rows:
         mn = make_dateId(row[mn_i])
         mc = row[sv_i]*
-        pr = calc_PR(dat:\]/a)
+        pr = calc_PR(data)
         mr = calc_MR(row)
         mwr = calc_MWR(data)
 
