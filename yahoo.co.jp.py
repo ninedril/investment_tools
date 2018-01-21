@@ -101,6 +101,7 @@ if __name__ == '__main__':
     mr_col.insert(0, '月間収益率')
     mr_col = np.array([[e] for e in mr_col])
     monthly_table = np.hstack(monthly_table, mr_col)
+    mr_i = len(monthly_table[0])-1
 
     ###　３．各行から、「月情報」「時価総額」「過去収益率」「月間加重収益率」を計算
     monthly_rows = monthly_table[1:]
