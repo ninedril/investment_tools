@@ -72,6 +72,51 @@ def get_array_from_table(table_element):
         result.append(datas)
     return result
 
+def get_table(company, term='w'):
+    target_url = 'https://kabutan.jp/'
+    
+    #dv = launchChrome(is_headless=True)
+    dv = launchChrome(is_headless=False)
+    dv.get(target_url)
+    search_by_company(dv, company)
+    
+    #import pdb; pdb.set_trace()
+
+    try:
+        get_result_companies_link(dv)[0].click()
+    except:
+        pass
+
+    try:
+        get_company_stock_price_link(dv).click()
+
+        get_company_stock_price_link_by_time(dv, term).click()
+
+        all_datas = []
+        is_first_table = True
+        while True:
+            table = dv.find_elements_by_css_selector('table.stock_kabuka2')[0]
+            new_datas = get_array_from_table(table)
+            if not(is_first_table):
+                new_datas = new_datas[1:]
+            else:
+                is_first_table = False
+            all_datas.extend(new_datas)
+            
+            try:
+                next_table_link = dv.find_element_by_xpath("//a[text()='次へ＞']")
+            except:
+                break
+            next_table_link.click()
+
+        return all_datas
+    
+    except:
+        pass
+    finally:
+        exit_driver(dv)
+
+
 if __name__ == '__main__':
     target_url = 'https://kabutan.jp/'
     company = sys.argv[1]
