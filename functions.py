@@ -2,7 +2,7 @@
 # arg1: specify company
 
 ##### Loading other libraries
-import sys, os
+import sys, os, urllib
 sys.path.append(os.pardir)
 from selenium_tools.function import *
 #####
@@ -40,12 +40,13 @@ def get_label_index(table_array, label_name):
         return -1
 
 # WebDriver, String, String => List
-def get_all_table_datas(wd, table_selector, nextlink_selector):
+def get_all_table_datas(wd, table_locator, nextlink_locator):
+    # WebDriver must be in the page with a table
     all_datas = []
     is_first_table = True
     while True:
         try:
-            table = wd.find_elements_by_css_selector(table_selector)[0]
+            table = wd.find_element_by_xpath(table_locator)
         except:
             break
 
@@ -57,11 +58,18 @@ def get_all_table_datas(wd, table_selector, nextlink_selector):
         all_datas.extend(new_datas)
         
         try:
-            next_table_link = wd.find_elements_by_css_selector(nextlink_selector)[0]
+            next_table_link = wd.find_element_by_xpath(nextlink_locator)
         except:
             break
         next_table_link.click()
 
-    exit_driver(wd)
     return all_datas
-    
+
+# String, String => String
+def get_url_value(url, q_key):
+    try:
+        q_str = urllib.parse.urlparse(url)[4]
+        v = urllib.parse.parse_qs(q_str)[q_key][0]
+        return v
+    except:
+        return ''

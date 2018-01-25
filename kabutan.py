@@ -2,163 +2,108 @@
 # arg1: specify company
 
 ##### Loading other libraries
-import sys, os
+import sys, os, re
 sys.path.append(os.pardir)
 from selenium_tools.function import *
+import functions
 #####
-
 import csv
 
-# WevDriver => Boolean
-def search_by_company(wd, company_name):
-    try:
-        s_box = wd.find_element_by_id('input_id')
+#import pdb; pdb.set_trace()
+
+#################################### Class #####################################
+################################################################################
+class Kabutan:
+    ####################
+    ### FIELDS
+    ####################
+    LOCATORS = {
+        'company_search_box':'//input[@id="input_id"]',
+        'company_search_results':'div#kensaku_kekka ul li a',
+        'price_table':'//div[@id="stock_kabuka_table"]//table[count(.//tr) > 9]', 
+        'next_table_link': '//a[text()="次へ＞"]'
+    }
+    BASE_URL = 'https://kabutan.jp/'
+    
+    ####################
+    ### CLASS METHODS
+    ####################
+    def set_locator(loc_key, loc_value):
+        Kabutan.LOCATORS[loc_key] = loc_value
+    
+    def make_url(**kw):
+        # kw = {'code':1000, 'term':'m'}
+        url = Kabutan.BASE_URL + 'stock/kabuka?'
+        if 'code' in kw:
+            url = url + 'code=' + str(kw['code'])
+        
+        if 'term' in kw:
+            if kw['term'] == 'm':
+                url = url + '&ashi=mon'
+            elif kw['term'] == 'w':
+                url = url + '&ashi=wek'
+        
+        return url
+    
+    ####################
+    ### INSTANCE METHODS
+    ####################
+    def __init__(self, wd):
+        self.wd = wd
+
+    # WebDriver => void
+    def set_driver(self, wd):
+        self.wd = wd
+
+    # String, String => List
+    def get_data_by_name(self, company_name, term):
+        self.wd.get(BASE_URL)
+        self.search_by_company(company_name)
+        result_companies = self.wd.find_elements_by_xpath(Kabutan.LOCATORS['company_search_results'])
+        result_companies[0].click()
+        
+        code = functions.get_url_value(self.wd.current_url, 'code')
+        all_datas = self.get_data_by_code(code, term)
+        return all_datas
+
+    # String, String => List
+    def get_data_by_code(self, company_code, term):
+        data_url = Kabutan.make_url(code=company_code, term=term)
+        self.wd.get(data_url)
+        all_datas = functions.get_all_table_datas(self.wd, Kabutan.LOCATORS['price_table'], Kabutan.LOCATORS['next_table_link'])
+        return all_datas
+
+    # WevDriver => void
+    def search_by_company(self, company_name):
+        s_box = self.wd.find_element_by_xpath(Kabutan.LOCATORS['company_search_box'])
         s_box.send_keys(company_name)
         s_box.submit()
-        return True
-    except:
-        return False
-
-# WebDriver => [WebElement, ...]
-def get_result_companies_link(wd):
-    try:
-        result_companies = wd.find_elements_by_css_selector('div#kensaku_kekka ul li a')
-        return result_companies
-    except:
-        return []
-
-# WebDriver => WebElement
-def get_company_stock_price_link(wd):
-    try:
-        c_link = wd.find_element_by_xpath("//a[text()='時系列']")
-    except:
-        print("cant find chart link")
-        c_link = None
-    return c_link
-
-# WebDriver, String => WebElement
-def get_company_stock_price_link_by_time(wd, term_flag):
-    if term_flag == 'w':
-        term = '週間株価'
-    elif term_flag == 'm':
-        term = '月間株価'
-    else:
-        print('Invalid term')
-        return None
-    
-    try:
-        c_link = wd.find_element_by_xpath("//a[text()='" + term + "']")
-    except:
-        print("cant find stock price link by " + term)
-        c_link = None
-    
-    return c_link
-
-# Array, String => Boolean
-def make_csv_from(array2d, path):
-    with open(path, 'w') as f:
-        w = csv.writer(f, lineterminator='\n')
-        w.writerows(array2d)
-
-# WebElement => Array
-def get_array_from_table(table_element):
-    header_row = table_element.find_elements_by_tag_name('tr')[0]
-    labels = list(map(lambda e: e.text, header_row.find_elements_by_tag_name('th')))
-
-    result = [labels]
-    data_rows = table_element.find_elements_by_tag_name('tr')[1:]
-    for row in data_rows:
-        datas = list(map(lambda e: e.text, row.find_elements_by_tag_name('td')))
-        result.append(datas)
-    return result
-
-def get_table(company, term='w'):
-    target_url = 'https://kabutan.jp/'
-    
-    #dv = launchChrome(is_headless=True)
-    dv = launchChrome(is_headless=False)
-    dv.get(target_url)
-    search_by_company(dv, company)
-    
-    #import pdb; pdb.set_trace()
-
-    try:
-        get_result_companies_link(dv)[0].click()
-    except:
-        pass
-
-    try:
-        get_company_stock_price_link(dv).click()
-
-        get_company_stock_price_link_by_time(dv, term).click()
-
-        all_datas = []
-        is_first_table = True
-        while True:
-            table = dv.find_elements_by_css_selector('table.stock_kabuka2')[0]
-            new_datas = get_array_from_table(table)
-            if not(is_first_table):
-                new_datas = new_datas[1:]
-            else:
-                is_first_table = False
-            all_datas.extend(new_datas)
-            
-            try:
-                next_table_link = dv.find_element_by_xpath("//a[text()='次へ＞']")
-            except:
-                break
-            next_table_link.click()
-
-        return all_datas
-    
-    except:
-        pass
-    finally:
-        exit_driver(dv)
 
 
+#################################### Main ######################################
+################################################################################
 if __name__ == '__main__':
-    target_url = 'https://kabutan.jp/'
     company = sys.argv[1]
-    
-    #dv = launchChrome(is_headless=True)
-    dv = launchChrome(is_headless=False)
-    dv.get(target_url)
-    search_by_company(dv, company)
-    
-    #import pdb; pdb.set_trace()
+    term = sys.argv[2]
 
     try:
-        get_result_companies_link(dv)[0].click()
+        term = re.match(r'^-{1,2}(\w)$', term, re.IGNORECASE).group(1)
     except:
-        pass
-
-    try:
-        get_company_stock_price_link(dv).click()
-
-        get_company_stock_price_link_by_time(dv, 'w').click()
-
-        all_datas = []
-        is_first_table = True
-        while True:
-            table = dv.find_elements_by_css_selector('table.stock_kabuka2')[0]
-            new_datas = get_array_from_table(table)
-            if not(is_first_table):
-                new_datas = new_datas[1:]
-            else:
-                is_first_table = False
-            all_datas.extend(new_datas)
-            
-            try:
-                next_table_link = dv.find_element_by_xpath("//a[text()='次へ＞']")
-            except:
-                break
-            next_table_link.click()
-
-        make_csv_from(all_datas, company + '.csv')
+        print('Invalid Argument')
+        sys.exit(0)
     
-    except:
-        pass
+    dv = launchChrome(is_headless=True)
+    #dv = launchChrome(is_headless=False)
+
+    kb = Kabutan(dv)
+    try:
+        if re.match(r'^\d+$', company):
+            all_datas = kb.get_data_by_code(company, term)
+        else:
+            all_datas = kb.get_data_by_name(company, term)
+    except Exception as e:
+        raise(e)
     finally:
         exit_driver(dv)
     
+    functions.make_csv_from(all_datas, company + '_' + term + '.csv')
