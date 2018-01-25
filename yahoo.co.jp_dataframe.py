@@ -10,26 +10,24 @@ from kabutan import Kabutan
 #####
 
 import csv
+import numpy as np
+import pandas as pd
 
 if __name__ == '__main__':
+    kb = Kabutan(dv)
     caps_rank_url = "https://info.finance.yahoo.co.jp/ranking/?kd=4&tm=d&vl=a&mk=3"
     dv = launchChrome(is_headless=False)
     dv.get(caps_rank_url)
 
     ### TOPIX(code=0010)の月次テーブル取得
-    topix_mon_rows = Kabutan.
-    t_mn_i = 0
-    t_cp_i = 4
-    t_sv_i = 7
-
+    topix_mon_rows = kb.get_data_by_code('0010', 'm')
+    topix_mon_rows = pd.DataFrame(topix_mon_rows[1:], columns=topix_mon_rows[0])
+    
     ### MC列を算出して列を追加
     t_mc_col = topix_mon_rows[:, t_cp_i]*topix_mon_rows[:, t_sv_i]
     t_mc_col = [[t] for t in t_mc_col]
     topix_mon_rows = np.hstack(topix_mon_rows, t_mc_col)
     t_mc_i = len(topix_mon_rows[0]) - 1
-
-    ### MN列を標準化
-    std_mn(topix_mon_rows, t_mn_i)
 
     ### TOPIXの月次MN-MCテーブルを作る
     topix_mc_rows = np.hstack([[m] for m in topix_mon_rows[:, t_mn_i]], topix_mon_rows[:, t_mc_i])
