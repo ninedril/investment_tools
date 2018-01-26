@@ -76,6 +76,6 @@ if __name__ == '__main__':
 
     ### m_1st_indexesの各キーループで、タプル配列をMCで並び替えてtop群、bottom群を作る
 
-    ### top群、bottom群内でさらに3つに分け、top_top, top_middle, top_bottom, bottom_top, bottom_middle, bottom_bottomの6群を作る
+    ### top群、bottom群内でさらにPRによって3つに分け、top_top, top_middle, top_bottom, bottom_top, bottom_middle, bottom_bottomの6群を作る
 
-    ### 6群を用いて指標値を算出する
+    ### 6群のMWRをそれぞれ算出
