@@ -73,3 +73,7 @@ def get_url_value(url, q_key):
         return v
     except:
         return ''
+
+# DataFrame => DataFrame
+def arrange_dataframe(df):
+    pass

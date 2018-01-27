@@ -57,7 +57,7 @@ class Kabutan:
 
     # String, String => List
     def get_data_by_name(self, company_name, term):
-        self.wd.get(BASE_URL)
+        self.wd.get(Kabutan.BASE_URL)
         self.search_by_company(company_name)
         result_companies = self.wd.find_elements_by_xpath(Kabutan.LOCATORS['company_search_results'])
         result_companies[0].click()
@@ -92,8 +92,8 @@ if __name__ == '__main__':
         print('Invalid Argument')
         sys.exit(0)
     
-    dv = launchChrome(is_headless=True)
-    #dv = launchChrome(is_headless=False)
+    #dv = launchChrome(is_headless=True)
+    dv = launchChrome(is_headless=False)
 
     kb = Kabutan(dv)
     try:
