@@ -33,6 +33,13 @@ def test(file_name, row_num=10):
 	df = df.applymap(convert_to_numeric)
 
 	### MNカラム以外のカラムのデータ型をint32に
-	df = df.astype({LABELS['OP']:'int32', LABELS['CP']:'int32', LABELS['SV']:'int32'})
+	df = df.astype({LABELS['OP']:'int32', LABELS['CP']:'int32', LABELS['SV']:'int64'})
 
 	return df
+
+def calc_1st_index(df):
+	###　MCで降順に並び替え
+	df = df.sort_values(by=LABELS[''])
+	###　上位グループと下位グループに分ける
+	###　上中下グループに分ける
+	###　指標計算
